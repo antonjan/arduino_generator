@@ -10,7 +10,8 @@ boolean settingMode;
 String ssidList;
 //On board LED Connected to GPIO2
 #define LED 2 
-
+#define INPUT_PIN 0  // Define Pin GPIO0 as input pin
+const int interruptPin = 0; //GPIO 0 (Flash Button)
 DNSServer dnsServer;
 ESP8266WebServer webServer(80);
 
@@ -19,7 +20,11 @@ void setup() {
   EEPROM.begin(512);
   delay(10);
   //Onboard LED port Direction output
-  pinMode(LED,OUTPUT);
+  pinMode(LED,OUTPUT);//relay 
+  pinMode(INPUT_PIN,INPUT); //Generator status
+  pinMode(interruptPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), handleInterrupt, CHANGE);
+  
   if (restoreConfig()) {
     if (checkConnection()) {
       settingMode = false;
@@ -37,7 +42,9 @@ void loop() {
   }
   webServer.handleClient();
 }
-
+void handleInterrupt(){
+  Serial.print("Handel interup of input pin: ");
+}
 boolean restoreConfig() {
   Serial.println("Reading EEPROM...");
   String ssid = "";
@@ -147,6 +154,14 @@ void startWebServer() {
     digitalWrite(LED,HIGH); //LED off
     webServer.send(200, "text/html", "OFF"); //Send ADC value only to client ajax request
 });
+   webServer.on("/input1",[](){
+    //handleInterrupt
+    bool inp = 0;
+    inp=digitalRead(INPUT_PIN);
+    Serial.print("Read digital input: ");
+    Serial.println(inp);
+    webServer.send(200, "text/html", "Digital input = "); //Send ADC value only to client ajax request
+   });
 //Adding start generator
 webServer.on("/startGenerator", []() {
 String s = "<h1>Generator was started.</p>";
@@ -155,7 +170,14 @@ String s = "<h1>Generator was started.</p>";
   }
   webServer.begin();
 }
-
+//Timer to update Generator input
+void timerCallback(void *pArg) {
+  // Bolean variable for digital input reads
+     bool inp = 0;
+  inp=digitalRead(INPUT_PIN);
+  Serial.print("Read digital input: ");
+  Serial.println(inp);
+}
 void setupMode() {
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
