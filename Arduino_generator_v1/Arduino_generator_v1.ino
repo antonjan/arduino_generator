@@ -26,7 +26,7 @@ Generator State:<iframe name="myIframe" width="100" height="25" frameBorder="0">
 <a href="http://www.giga.co.za">Giga Technology</a>
 </center>
  
-</body>https://circuits4you.com/handleRoot
+</body>
 </html>
 )=====";
 //---------------------------------------------------------------
