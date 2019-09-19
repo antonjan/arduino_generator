@@ -18,6 +18,8 @@ void setup() {
   Serial.begin(115200);
   EEPROM.begin(512);
   delay(10);
+  //Onboard LED port Direction output
+  pinMode(LED,OUTPUT);
   if (restoreConfig()) {
     if (checkConnection()) {
       settingMode = false;
@@ -123,7 +125,7 @@ void startWebServer() {
     Serial.print("Starting Web Server at ");
     Serial.println(WiFi.localIP());
     webServer.on("/", []() {
-      String s = "<h1>STA mode</h1><p><a href=\"/reset\">Reset Wi-Fi Settings</a></p> Start Generator<br>   Stop Generator<br>Generator Status<br>Input Status<br><a href=\"http://www.giga.co.za\">Giga Technology</a>";
+      String s = "<h1>STA mode</h1><p><a href=\"/reset\">Reset Wi-Fi Settings</a></p> <a href=\"/start1\" target=\"myIframe\">Start Generator</a><br><a href=\"/stop1\" target=\"myIframe\">Stop Generator</a><br>Input Status<br><a href=\"http://www.giga.co.za\">Giga Technology</a><br>Generator State:<iframe name=\"myIframe\" width=\"100\" height=\"25\" frameBorder=\"0\"><br>";
       webServer.send(200, "text/html", makePage("STA mode", s));
     });
     webServer.on("/reset", []() {
@@ -134,6 +136,17 @@ void startWebServer() {
       String s = "<h1>Wi-Fi settings was reset.</h1><p>Please reset device.</p>";
       webServer.send(200, "text/html", makePage("Reset Wi-Fi Settings", s));
     });
+    webServer.on("/start1",[]() { 
+    Serial.println("Generator on page");
+    digitalWrite(LED,LOW); //LED is connected in reverse
+    webServer.send(200, "text/html", "ON"); //Send ADC value only to client ajax request
+});
+ 
+    webServer.on("/stop1",[]() { 
+    Serial.println("Generator off page");
+    digitalWrite(LED,HIGH); //LED off
+    webServer.send(200, "text/html", "OFF"); //Send ADC value only to client ajax request
+});
 //Adding start generator
 webServer.on("/startGenerator", []() {
 String s = "<h1>Generator was started.</p>";
@@ -142,17 +155,7 @@ String s = "<h1>Generator was started.</p>";
   }
   webServer.begin();
 }
-void handleGeneratorOn() { 
- Serial.println("Generator on page");
- digitalWrite(LED,LOW); //LED is connected in reverse
- webServer.send(200, "text/html", "ON"); //Send ADC value only to client ajax request
-}
- 
-void handleGeneratorOff() { 
- Serial.println("Generator off page");
- digitalWrite(LED,HIGH); //LED off
- webServer.send(200, "text/html", "OFF"); //Send ADC value only to client ajax request
-}
+
 void setupMode() {
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
